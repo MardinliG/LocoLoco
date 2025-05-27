@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSupabase } from '@/lib/supabase-provider'
 import { toast } from 'react-hot-toast'
-import { FiGithub, FiMail } from 'react-icons/fi'
+import { FiGithub } from 'react-icons/fi'
 import { FcGoogle } from 'react-icons/fc'
 
 type AuthMode = 'signin' | 'signup'

@@ -5,11 +5,11 @@ import { Toaster } from 'react-hot-toast'
 import { SupabaseProvider } from '@/lib/supabase-provider'
 import Navbar from '@/components/Navbar'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'Lococktail - L\'encyclopédie du cocktail',
-    description: 'Découvrez et partagez vos recettes de cocktails préférées',
+    title: 'AuMax - Découvrez les meilleurs cocktails',
+    description: 'Explorez une collection de cocktails du monde entier',
 }
 
 export default function RootLayout({
@@ -19,11 +19,11 @@ export default function RootLayout({
 }) {
     return (
         <html lang="fr">
-            <body className={`${inter.variable} font-sans`}>
+            <body className={inter.className}>
                 <SupabaseProvider>
                     <Navbar />
                     <main>{children}</main>
-                    <Toaster position="top-right" />
+                    <Toaster position="top-center" />
                 </SupabaseProvider>
             </body>
         </html>

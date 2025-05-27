@@ -5,20 +5,28 @@ import CocktailForm from '@/components/CocktailForm'
 
 export default async function NewCocktailPage() {
     const supabase = createServerComponentClient({ cookies })
-    const { data: { session } } = await supabase.auth.getSession()
 
+    // Vérifier si l'utilisateur est connecté
+    const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
         redirect('/login')
     }
 
+    // Vérifier si l'utilisateur est admin
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single()
+
+    if (profile?.role !== 'admin') {
+        redirect('/')
+    }
+
     return (
-        <div className="container mx-auto px-4 py-8">
-            <div className="max-w-2xl mx-auto">
-                <h1 className="text-3xl font-bold text-center mb-8">Créer un nouveau cocktail</h1>
-                <div className="bg-white rounded-lg shadow-lg p-6">
-                    <CocktailForm mode="create" />
-                </div>
-            </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-8">Nouveau cocktail</h1>
+            <CocktailForm />
         </div>
     )
 } 

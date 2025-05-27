@@ -9,7 +9,7 @@ type Profile = {
     id: string
     username: string
     created_at: string
-    is_admin: boolean
+    role: string
 }
 
 export default function ProfileForm({ profile }: { profile: Profile | null }) {
@@ -91,7 +91,7 @@ export default function ProfileForm({ profile }: { profile: Profile | null }) {
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Statut</label>
                     <p className="mt-1 text-lg text-gray-900">
-                        {profile?.is_admin ? 'Administrateur' : 'Utilisateur'}
+                        {profile?.role === 'admin' ? 'Administrateur' : 'Utilisateur'}
                     </p>
                 </div>
 

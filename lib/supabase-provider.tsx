@@ -1,62 +1,54 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation'
+import type { SupabaseClient, User } from '@supabase/auth-helpers-nextjs'
+import type { Database } from '@/lib/supabase'
 
-type SupabaseContextType = {
+type SupabaseContext = {
+    supabase: SupabaseClient<Database>
     user: User | null
-    signIn: (provider: 'google' | 'github') => Promise<void>
-    signOut: () => Promise<void>
+    session: any | null
 }
 
-const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined)
+const Context = createContext<SupabaseContext | undefined>(undefined)
 
-export function SupabaseProvider({ children }: { children: React.ReactNode }) {
+export function SupabaseProvider({
+    children,
+}: {
+    children: React.ReactNode
+}) {
+    const [supabase] = useState(() => createClientComponentClient<Database>())
     const [user, setUser] = useState<User | null>(null)
+    const [session, setSession] = useState<any | null>(null)
+    const router = useRouter()
 
     useEffect(() => {
-        // Check active sessions and sets the user
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null)
-        })
-
-        // Listen for changes on auth state (logged in, signed out, etc.)
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            setSession(session)
             setUser(session?.user ?? null)
+            router.refresh()
         })
 
-        return () => subscription.unsubscribe()
-    }, [])
-
-    const signIn = async (provider: 'google' | 'github') => {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider,
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-            },
-        })
-        if (error) throw error
-    }
-
-    const signOut = async () => {
-        const { error } = await supabase.auth.signOut()
-        if (error) throw error
-    }
+        return () => {
+            subscription.unsubscribe()
+        }
+    }, [supabase, router])
 
     return (
-        <SupabaseContext.Provider value={{ user, signIn, signOut }}>
+        <Context.Provider value={{ supabase, user, session }}>
             {children}
-        </SupabaseContext.Provider>
+        </Context.Provider>
     )
 }
 
-export function useSupabase() {
-    const context = useContext(SupabaseContext)
+export const useSupabase = () => {
+    const context = useContext(Context)
     if (context === undefined) {
-        throw new Error('useSupabase must be used within a SupabaseProvider')
+        throw new Error('useSupabase must be used inside SupabaseProvider')
     }
     return context
 } 

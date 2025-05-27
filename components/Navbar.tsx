@@ -3,22 +3,27 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FiMenu, FiX, FiUser, FiLogOut, FiSettings } from 'react-icons/fi'
+import { FiMenu, FiX, FiUser, FiLogOut } from 'react-icons/fi'
 import { useSupabase } from '@/lib/supabase-provider'
+import { toast } from 'react-hot-toast'
 
 export default function Navbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
     const pathname = usePathname()
-    const { user, signOut } = useSupabase()
+    const { supabase, user } = useSupabase()
+
+    const handleSignOut = async () => {
+        try {
+            const { error } = await supabase.auth.signOut()
+            if (error) throw error
+            toast.success('Déconnexion réussie')
+        } catch (error: any) {
+            toast.error(error.message || 'Erreur lors de la déconnexion')
+        }
+    }
 
     const isActive = (path: string) => pathname === path
-
-    const navLinks = [
-        { href: '/world', label: 'World' },
-        { href: '/quiz', label: 'Quiz' },
-        { href: '/favorites', label: 'Favoris' },
-    ]
 
     return (
         <nav className="bg-white shadow-sm">
@@ -26,55 +31,60 @@ export default function Navbar() {
                 <div className="flex justify-between h-16">
                     <div className="flex">
                         <Link href="/" className="flex items-center">
-                            <span className="text-xl font-bold text-primary-600">Lococktail</span>
+                            <span className="text-xl font-bold text-gray-900">AuMax</span>
                         </Link>
                     </div>
 
-                    {/* Desktop Navigation */}
+                    {/* Desktop menu */}
                     <div className="hidden sm:flex sm:items-center sm:space-x-8">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={`${isActive(link.href)
-                                    ? 'text-primary-600'
-                                    : 'text-gray-500 hover:text-gray-900'
-                                    } px-3 py-2 text-sm font-medium`}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
-
+                        <Link
+                            href="/"
+                            className={`text-sm font-medium ${isActive('/') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            Accueil
+                        </Link>
+                        <Link
+                            href="/world"
+                            className={`text-sm font-medium ${isActive('/world') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            World
+                        </Link>
+                        <Link
+                            href="/cocktails"
+                            className={`text-sm font-medium ${isActive('/cocktails') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            Cocktails
+                        </Link>
+                        <Link
+                            href="/quiz"
+                            className={`text-sm font-medium ${isActive('/quiz') ? 'text-blue-600' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            Quiz
+                        </Link>
                         {user ? (
                             <div className="relative">
                                 <button
                                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                                    className="flex items-center text-gray-500 hover:text-gray-900"
+                                    className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-900"
                                 >
                                     <FiUser className="h-5 w-5" />
                                 </button>
-
                                 {isUserMenuOpen && (
-                                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                                    <div className="absolute right-0 w-48 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                         <div className="py-1">
                                             <Link
                                                 href="/profile"
                                                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                onClick={() => setIsUserMenuOpen(false)}
                                             >
                                                 <FiUser className="mr-3 h-5 w-5" />
-                                                Mon profil
+                                                Profil
                                             </Link>
-                                            {user.role === 'admin' && (
-                                                <Link
-                                                    href="/admin"
-                                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                >
-                                                    <FiSettings className="mr-3 h-5 w-5" />
-                                                    Administration
-                                                </Link>
-                                            )}
                                             <button
-                                                onClick={() => signOut()}
+                                                onClick={() => {
+                                                    handleSignOut()
+                                                    setIsUserMenuOpen(false)
+                                                }}
                                                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                             >
                                                 <FiLogOut className="mr-3 h-5 w-5" />
@@ -87,7 +97,7 @@ export default function Navbar() {
                         ) : (
                             <Link
                                 href="/login"
-                                className="text-gray-500 hover:text-gray-900 px-3 py-2 text-sm font-medium"
+                                className="text-sm font-medium text-gray-500 hover:text-gray-900"
                             >
                                 Connexion
                             </Link>
@@ -95,15 +105,15 @@ export default function Navbar() {
                     </div>
 
                     {/* Mobile menu button */}
-                    <div className="flex items-center sm:hidden">
+                    <div className="sm:hidden flex items-center">
                         <button
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
-                            className="text-gray-500 hover:text-gray-900"
+                            className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
                         >
                             {isMenuOpen ? (
-                                <FiX className="h-6 w-6" />
+                                <FiX className="block h-6 w-6" />
                             ) : (
-                                <FiMenu className="h-6 w-6" />
+                                <FiMenu className="block h-6 w-6" />
                             )}
                         </button>
                     </div>
@@ -114,37 +124,41 @@ export default function Navbar() {
             {isMenuOpen && (
                 <div className="sm:hidden">
                     <div className="pt-2 pb-3 space-y-1">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={`${isActive(link.href)
-                                    ? 'bg-primary-50 text-primary-600'
-                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                                    } block px-3 py-2 text-base font-medium`}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
+                        <Link
+                            href="/"
+                            className={`block px-3 py-2 text-base font-medium ${isActive('/') ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+                        >
+                            Accueil
+                        </Link>
+                        <Link
+                            href="/world"
+                            className={`block px-3 py-2 text-base font-medium ${isActive('/world') ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+                        >
+                            World
+                        </Link>
+                        <Link
+                            href="/cocktails"
+                            className={`block px-3 py-2 text-base font-medium ${isActive('/cocktails') ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+                        >
+                            Cocktails
+                        </Link>
+                        <Link
+                            href="/quiz"
+                            className={`block px-3 py-2 text-base font-medium ${isActive('/quiz') ? 'text-blue-600 bg-blue-50' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+                        >
+                            Quiz
+                        </Link>
                         {user ? (
                             <>
                                 <Link
                                     href="/profile"
-                                    className="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                    className="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                                 >
-                                    Mon profil
+                                    Profil
                                 </Link>
-                                {user.role === 'admin' && (
-                                    <Link
-                                        href="/admin"
-                                        className="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900"
-                                    >
-                                        Administration
-                                    </Link>
-                                )}
                                 <button
-                                    onClick={() => signOut()}
-                                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                    onClick={handleSignOut}
+                                    className="block w-full text-left px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                                 >
                                     Déconnexion
                                 </button>
@@ -152,7 +166,7 @@ export default function Navbar() {
                         ) : (
                             <Link
                                 href="/login"
-                                className="block px-3 py-2 text-base font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                                className="block px-3 py-2 text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                             >
                                 Connexion
                             </Link>
