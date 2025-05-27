@@ -24,58 +24,83 @@ export default function CocktailComments({ cocktailId }: CocktailCommentsProps) 
     const [error, setError] = useState<string | null>(null)
     const supabase = createClientComponentClient()
 
-    useEffect(() => {
-        const fetchComments = async () => {
-            try {
-                // D'abord, récupérer les notes avec les commentaires
-                const { data: ratingsData, error: ratingsError } = await supabase
-                    .from('ratings')
-                    .select(`
-                        id,
-                        rating,
-                        comment,
-                        created_at,
-                        user_id
-                    `)
-                    .eq('cocktail_id', cocktailId)
-                    .order('created_at', { ascending: false })
+    const fetchComments = async () => {
+        try {
+            setIsLoading(true)
+            // D'abord, récupérer les notes avec les commentaires
+            const { data: ratingsData, error: ratingsError } = await supabase
+                .from('ratings')
+                .select(`
+                    id,
+                    rating,
+                    comment,
+                    created_at,
+                    user_id
+                `)
+                .eq('cocktail_id', cocktailId)
+                .order('created_at', { ascending: false })
 
-                if (ratingsError) {
-                    throw ratingsError
-                }
-
-                if (!ratingsData) {
-                    setComments([])
-                    return
-                }
-
-                // Ensuite, récupérer les usernames pour chaque user_id
-                const userIds = ratingsData.map(rating => rating.user_id)
-                const { data: profilesData, error: profilesError } = await supabase
-                    .from('profiles')
-                    .select('id, username')
-                    .in('id', userIds)
-
-                if (profilesError) {
-                    throw profilesError
-                }
-
-                // Combiner les données
-                const commentsWithProfiles = ratingsData.map(rating => ({
-                    ...rating,
-                    profiles: profilesData?.find(profile => profile.id === rating.user_id) || { username: 'Utilisateur anonyme' }
-                }))
-
-                setComments(commentsWithProfiles)
-            } catch (error) {
-                console.error('Error fetching comments:', error)
-                setError('Erreur lors du chargement des commentaires')
-            } finally {
-                setIsLoading(false)
+            if (ratingsError) {
+                throw ratingsError
             }
-        }
 
+            if (!ratingsData) {
+                setComments([])
+                return
+            }
+
+            // Ensuite, récupérer les usernames pour chaque user_id
+            const userIds = ratingsData.map(rating => rating.user_id)
+            const { data: profilesData, error: profilesError } = await supabase
+                .from('profiles')
+                .select('id, username')
+                .in('id', userIds)
+
+            if (profilesError) {
+                throw profilesError
+            }
+
+            // Combiner les données
+            const commentsWithProfiles = ratingsData.map(rating => ({
+                ...rating,
+                profiles: profilesData?.find(profile => profile.id === rating.user_id) || { username: 'Utilisateur anonyme' }
+            }))
+
+            setComments(commentsWithProfiles)
+        } catch (error) {
+            console.error('Error fetching comments:', error)
+            setError('Erreur lors du chargement des commentaires')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useEffect(() => {
         fetchComments()
+
+        // S'abonner aux changements de la table ratings
+        const channel = supabase
+            .channel(`ratings_changes_${cocktailId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'ratings',
+                    filter: `cocktail_id=eq.${cocktailId}`
+                },
+                (payload) => {
+                    console.log('Received change:', payload)
+                    fetchComments()
+                }
+            )
+            .subscribe((status) => {
+                console.log('Subscription status:', status)
+            })
+
+        return () => {
+            channel.unsubscribe()
+        }
     }, [cocktailId])
 
     if (isLoading) {

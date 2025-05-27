@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import { FiPlus, FiTrash2 } from 'react-icons/fi'
@@ -8,34 +8,60 @@ import { FiPlus, FiTrash2 } from 'react-icons/fi'
 type Country = {
     id: string
     name: string
+    code: string
 }
 
 type CocktailFormProps = {
-    mode: 'create' | 'edit'
-    initialData?: {
+    cocktail?: {
         id: string
         name: string
-        description: string
-        ingredients: string[]
-        instructions: string
-        image_url: string
-        country_id: string
+        description: string | null
+        ingredients: string[] | null
+        instructions: string | null
+        image_url: string | null
+        country_id: string | null
     }
-    countries: Country[]
 }
 
-export default function CocktailForm({ mode, initialData, countries }: CocktailFormProps) {
-    const [name, setName] = useState(initialData?.name || '')
-    const [description, setDescription] = useState(initialData?.description || '')
-    const [ingredients, setIngredients] = useState<string[]>(initialData?.ingredients || [''])
-    const [instructions, setInstructions] = useState(initialData?.instructions || '')
-    const [imageUrl, setImageUrl] = useState(initialData?.image_url || '')
-    const [countryId, setCountryId] = useState(initialData?.country_id || '')
+export default function CocktailForm({ cocktail }: CocktailFormProps) {
+    const [name, setName] = useState(cocktail?.name || '')
+    const [description, setDescription] = useState(cocktail?.description || '')
+    const [ingredients, setIngredients] = useState<string[]>(cocktail?.ingredients || [])
+    const [instructions, setInstructions] = useState(cocktail?.instructions || '')
+    const [imageUrl, setImageUrl] = useState(cocktail?.image_url || '')
+    const [countryId, setCountryId] = useState(cocktail?.country_id || '')
+    const [countries, setCountries] = useState<Country[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
-
+    const [newIngredient, setNewIngredient] = useState('')
     const supabase = createClientComponentClient()
     const router = useRouter()
+
+    useEffect(() => {
+        const fetchCountries = async () => {
+            try {
+                setIsLoading(true)
+                const { data, error } = await supabase
+                    .from('countries')
+                    .select('*')
+                    .order('name')
+
+                if (error) {
+                    throw error
+                }
+
+                setCountries(data || [])
+            } catch (error) {
+                console.error('Error fetching countries:', error)
+                setError('Erreur lors du chargement des pays')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchCountries()
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -44,28 +70,32 @@ export default function CocktailForm({ mode, initialData, countries }: CocktailF
 
         try {
             const { data: { user } } = await supabase.auth.getUser()
+
             if (!user) {
-                throw new Error('Vous devez être connecté pour effectuer cette action')
+                router.push('/login')
+                return
             }
 
             const cocktailData = {
                 name,
-                description,
-                ingredients: ingredients.filter(i => i.trim() !== ''),
-                instructions,
-                image_url: imageUrl,
-                country_id: countryId,
+                description: description || null,
+                ingredients: ingredients.length > 0 ? ingredients : null,
+                instructions: instructions || null,
+                image_url: imageUrl || null,
+                country_id: countryId || null,
                 user_id: user.id
             }
 
-            if (mode === 'edit' && initialData) {
+            if (cocktail) {
+                // Mise à jour
                 const { error: updateError } = await supabase
                     .from('cocktails')
                     .update(cocktailData)
-                    .eq('id', initialData.id)
+                    .eq('id', cocktail.id)
 
                 if (updateError) throw updateError
             } else {
+                // Création
                 const { error: insertError } = await supabase
                     .from('cocktails')
                     .insert(cocktailData)
@@ -77,24 +107,29 @@ export default function CocktailForm({ mode, initialData, countries }: CocktailF
             router.refresh()
         } catch (error) {
             console.error('Error submitting cocktail:', error)
-            setError(error instanceof Error ? error.message : 'Une erreur est survenue')
+            setError('Erreur lors de l\'enregistrement du cocktail')
         } finally {
             setIsSubmitting(false)
         }
     }
 
-    const addIngredient = () => {
-        setIngredients([...ingredients, ''])
+    const handleAddIngredient = () => {
+        if (newIngredient.trim()) {
+            setIngredients([...ingredients, newIngredient.trim()])
+            setNewIngredient('')
+        }
     }
 
-    const removeIngredient = (index: number) => {
+    const handleRemoveIngredient = (index: number) => {
         setIngredients(ingredients.filter((_, i) => i !== index))
     }
 
-    const updateIngredient = (index: number, value: string) => {
-        const newIngredients = [...ingredients]
-        newIngredients[index] = value
-        setIngredients(newIngredients)
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-[400px]">
+                <div className="text-gray-600">Chargement...</div>
+            </div>
+        )
     }
 
     return (
@@ -127,37 +162,58 @@ export default function CocktailForm({ mode, initialData, countries }: CocktailF
             </div>
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                    Pays d'origine
+                </label>
+                <select
+                    id="country"
+                    value={countryId}
+                    onChange={(e) => setCountryId(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                    <option value="">Sélectionnez un pays</option>
+                    {countries.map((country) => (
+                        <option key={country.id} value={country.id}>
+                            {country.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div>
+                <label className="block text-sm font-medium text-gray-700">
                     Ingrédients
                 </label>
-                <div className="space-y-2">
+                <div className="mt-1 flex space-x-2">
+                    <input
+                        type="text"
+                        value={newIngredient}
+                        onChange={(e) => setNewIngredient(e.target.value)}
+                        placeholder="Ajouter un ingrédient"
+                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <button
+                        type="button"
+                        onClick={handleAddIngredient}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                        Ajouter
+                    </button>
+                </div>
+                <ul className="mt-2 space-y-2">
                     {ingredients.map((ingredient, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                            <input
-                                type="text"
-                                value={ingredient}
-                                onChange={(e) => updateIngredient(index, e.target.value)}
-                                required
-                                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                            />
+                        <li key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded-md">
+                            <span>{ingredient}</span>
                             <button
                                 type="button"
-                                onClick={() => removeIngredient(index)}
-                                className="p-2 text-red-600 hover:text-red-800"
+                                onClick={() => handleRemoveIngredient(index)}
+                                className="text-red-600 hover:text-red-800"
                             >
-                                <FiTrash2 />
+                                Supprimer
                             </button>
-                        </div>
+                        </li>
                     ))}
-                </div>
-                <button
-                    type="button"
-                    onClick={addIngredient}
-                    className="mt-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                    <FiPlus className="mr-2" />
-                    Ajouter un ingrédient
-                </button>
+                </ul>
             </div>
 
             <div>
@@ -168,7 +224,6 @@ export default function CocktailForm({ mode, initialData, countries }: CocktailF
                     id="instructions"
                     value={instructions}
                     onChange={(e) => setInstructions(e.target.value)}
-                    required
                     rows={5}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 />
@@ -187,26 +242,6 @@ export default function CocktailForm({ mode, initialData, countries }: CocktailF
                 />
             </div>
 
-            <div>
-                <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-                    Pays d'origine
-                </label>
-                <select
-                    id="country"
-                    value={countryId}
-                    onChange={(e) => setCountryId(e.target.value)}
-                    required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                    <option value="">Sélectionnez un pays</option>
-                    {countries.map((country) => (
-                        <option key={country.id} value={country.id}>
-                            {country.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
             {error && (
                 <div className="text-sm text-red-600">
                     {error}
@@ -221,7 +256,7 @@ export default function CocktailForm({ mode, initialData, countries }: CocktailF
                 >
                     {isSubmitting
                         ? 'Enregistrement...'
-                        : mode === 'edit'
+                        : cocktail
                             ? 'Mettre à jour le cocktail'
                             : 'Créer le cocktail'}
                 </button>

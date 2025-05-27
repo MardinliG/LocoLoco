@@ -17,6 +17,43 @@ export default function FavoriteButton({ cocktailId, initialIsFavorite = false }
     const supabase = createClientComponentClient()
     const router = useRouter()
 
+    // Fonction pour vérifier si le cocktail est dans les favoris
+    const checkFavoriteStatus = async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) {
+                setIsFavorite(false)
+                return
+            }
+
+            const { data, error } = await supabase
+                .from('favorites')
+                .select('id')
+                .eq('cocktail_id', cocktailId)
+                .eq('user_id', user.id)
+                .single()
+
+            if (error && error.code !== 'PGRST116') {
+                console.error('Error checking favorite status:', error)
+                return
+            }
+
+            setIsFavorite(!!data)
+        } catch (error) {
+            console.error('Error checking favorite status:', error)
+        }
+    }
+
+    // Vérifier le statut au montage du composant
+    useEffect(() => {
+        checkFavoriteStatus()
+    }, [cocktailId])
+
+    // Réinitialiser le statut quand l'utilisateur change
+    useEffect(() => {
+        checkFavoriteStatus()
+    }, [supabase.auth.getUser()])
+
     const toggleFavorite = async () => {
         if (isLoading) return
 
@@ -24,60 +61,38 @@ export default function FavoriteButton({ cocktailId, initialIsFavorite = false }
         setError(null)
 
         try {
-            const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-            if (userError) {
-                console.error('Error getting user:', userError)
-                throw new Error('Erreur lors de la récupération de l\'utilisateur')
-            }
+            const { data: { user } } = await supabase.auth.getUser()
 
             if (!user) {
                 router.push('/login')
                 return
             }
 
-            console.log('User authenticated:', user.id)
-
             if (isFavorite) {
                 // Supprimer des favoris
-                console.log('Removing from favorites:', { cocktailId, userId: user.id })
-                const { data: deleteData, error: deleteError } = await supabase
+                const { error: deleteError } = await supabase
                     .from('favorites')
                     .delete()
                     .eq('cocktail_id', cocktailId)
                     .eq('user_id', user.id)
-                    .select()
 
-                if (deleteError) {
-                    console.error('Error deleting favorite:', deleteError)
-                    throw new Error(`Erreur lors de la suppression des favoris: ${deleteError.message}`)
-                }
-
-                console.log('Favorite removed successfully:', deleteData)
+                if (deleteError) throw deleteError
+                setIsFavorite(false)
             } else {
                 // Ajouter aux favoris
-                console.log('Adding to favorites:', { cocktailId, userId: user.id })
-                const { data: insertData, error: insertError } = await supabase
+                const { error: insertError } = await supabase
                     .from('favorites')
                     .insert({
                         cocktail_id: cocktailId,
                         user_id: user.id
                     })
-                    .select()
 
-                if (insertError) {
-                    console.error('Error inserting favorite:', insertError)
-                    throw new Error(`Erreur lors de l'ajout aux favoris: ${insertError.message}`)
-                }
-
-                console.log('Favorite added successfully:', insertData)
+                if (insertError) throw insertError
+                setIsFavorite(true)
             }
-
-            setIsFavorite(!isFavorite)
-            router.refresh()
         } catch (error) {
             console.error('Error toggling favorite:', error)
-            setError(error instanceof Error ? error.message : 'Une erreur est survenue')
+            setError('Erreur lors de la modification des favoris')
         } finally {
             setIsLoading(false)
         }
@@ -89,18 +104,20 @@ export default function FavoriteButton({ cocktailId, initialIsFavorite = false }
                 type="button"
                 onClick={toggleFavorite}
                 disabled={isLoading}
-                className={`p-2 rounded-full transition-colors ${isFavorite
+                className={`p-2 rounded-full transition-colors focus:outline-none ${isFavorite
                         ? 'text-red-500 hover:text-red-600'
-                        : 'text-gray-400 hover:text-red-500'
+                        : 'text-gray-400 hover:text-gray-500'
                     }`}
-                title={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
             >
-                <FiHeart className={`w-6 h-6 ${isFavorite ? 'fill-current' : ''}`} />
+                <FiHeart
+                    className={`w-8 h-8 ${isFavorite ? 'fill-current' : ''
+                        }`}
+                />
             </button>
             {error && (
-                <div className="text-sm text-red-600 mt-1">
+                <p className="mt-2 text-sm text-red-600">
                     {error}
-                </div>
+                </p>
             )}
         </div>
     )
