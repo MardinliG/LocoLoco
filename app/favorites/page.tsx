@@ -4,6 +4,25 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { FiArrowLeft } from 'react-icons/fi'
 
+type Favorite = {
+    id: string
+    created_at: string
+    cocktails: {
+        id: string
+        name: string
+        description: string | null
+        image_url: string | null
+        ingredients: string[]
+        instructions: string
+        country_id: string
+        countries: {
+            id: string
+            name: string
+            code: string
+        }
+    }
+}
+
 export default async function FavoritesPage() {
     const supabase = createServerComponentClient({ cookies })
 
@@ -24,6 +43,9 @@ export default async function FavoritesPage() {
                 name,
                 description,
                 image_url,
+                ingredients,
+                instructions,
+                country_id,
                 countries:country_id (
                     id,
                     name,
@@ -39,6 +61,9 @@ export default async function FavoritesPage() {
         throw error
     }
 
+    // Cast the data to the expected type
+    const typedFavorites = (favorites || []) as unknown as Favorite[]
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex items-center justify-between mb-8">
@@ -52,9 +77,9 @@ export default async function FavoritesPage() {
                 </Link>
             </div>
 
-            {favorites && favorites.length > 0 ? (
+            {typedFavorites.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {favorites.map((favorite) => (
+                    {typedFavorites.map((favorite) => (
                         <Link
                             key={favorite.id}
                             href={`/cocktails/${favorite.cocktails.id}`}

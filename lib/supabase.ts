@@ -2,12 +2,17 @@ import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Missing Supabase environment variables')
 }
 
+// Client for read operations (uses anon key)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Client for write operations (uses service role key)
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey)
 
 export type Database = {
     public: {
@@ -211,6 +216,35 @@ export type Database = {
                     quiz_id?: string
                     selected_answer?: string
                     is_correct?: boolean
+                    created_at?: string
+                }
+            }
+            quiz_results: {
+                Row: {
+                    id: string
+                    user_id: string
+                    score: number
+                    total_questions: number
+                    correct_answers: number
+                    time_taken: number
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    user_id: string
+                    score: number
+                    total_questions: number
+                    correct_answers: number
+                    time_taken: number
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    user_id?: string
+                    score?: number
+                    total_questions?: number
+                    correct_answers?: number
+                    time_taken?: number
                     created_at?: string
                 }
             }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSupabase } from '@/lib/supabase-provider'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { toast } from 'react-hot-toast'
 
 type Question = {
@@ -31,38 +31,49 @@ export default function Quiz() {
     const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [startTime, setStartTime] = useState<number | null>(null)
+    const [showScore, setShowScore] = useState(false)
+    const [timerActive, setTimerActive] = useState(true)
 
     useEffect(() => {
-        loadQuestions()
+        fetchQuestions()
     }, [])
 
     useEffect(() => {
-        if (timeLeft > 0 && !isQuizComplete) {
-            const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
-            return () => clearTimeout(timer)
+        let timer: NodeJS.Timeout;
+        if (timeLeft > 0 && !isQuizComplete && timerActive) {
+            timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
         } else if (timeLeft === 0 && !isQuizComplete) {
             handleNextQuestion()
         }
-    }, [timeLeft, isQuizComplete])
+        return () => {
+            if (timer) clearTimeout(timer)
+        }
+    }, [timeLeft, isQuizComplete, timerActive])
 
-    const loadQuestions = async () => {
+    const fetchQuestions = async () => {
         try {
-            const { data, error } = await supabase
+            setIsLoading(true)
+            const { data: questions, error } = await supabase
                 .from('quiz_questions')
                 .select('*')
-                .order('created_at', { ascending: false })
-                .limit(10)
 
             if (error) throw error
 
-            if (data) {
-                setQuestions(data)
-                setStartTime(Date.now())
-            }
+            // Sélectionner 5 questions aléatoires
+            const shuffled = questions.sort(() => 0.5 - Math.random())
+            const selectedQuestions = shuffled.slice(0, 5)
+
+            setQuestions(selectedQuestions)
+            setCurrentQuestion(0)
+            setScore(0)
+            setShowScore(false)
+            setTimeLeft(30)
+            setTimerActive(true)
+            setStartTime(Date.now())
+            setIsLoading(false)
         } catch (error) {
-            console.error('Error loading questions:', error)
+            console.error('Error fetching questions:', error)
             toast.error('Erreur lors du chargement des questions')
-        } finally {
             setIsLoading(false)
         }
     }
@@ -94,35 +105,68 @@ export default function Quiz() {
 
             setQuizResult(result)
             setIsQuizComplete(true)
+            setTimerActive(false)
 
             // Sauvegarder le résultat si l'utilisateur est connecté
             if (session?.user) {
                 try {
-                    const { error } = await supabase
+                    const now = new Date().toISOString()
+                    const quizResult = {
+                        user_id: session.user.id,
+                        score,
+                        total_questions: questions.length,
+                        correct_answers: correctAnswers,
+                        time_taken: timeTaken,
+                        created_at: now,
+                        updated_at: now
+                    }
+
+                    const { data, error } = await supabaseAdmin
                         .from('quiz_results')
-                        .insert({
-                            user_id: session.user.id,
-                            quiz_id: questions[0].quiz_id,
-                            score,
-                            completed_at: new Date().toISOString()
-                        })
+                        .insert(quizResult)
+                        .select()
 
                     if (error) throw error
-                } catch (error) {
+                    toast.success('Résultat sauvegardé avec succès')
+                } catch (error: any) {
                     console.error('Error saving quiz result:', error)
+                    toast.error(`Erreur lors de la sauvegarde du résultat: ${error?.message || 'Erreur inconnue'}`)
                 }
+            } else {
+                toast.error('Vous devez être connecté pour sauvegarder votre résultat')
             }
         }
     }
 
-    const restartQuiz = () => {
-        setCurrentQuestion(0)
-        setSelectedAnswer(null)
-        setScore(0)
-        setTimeLeft(30)
-        setIsQuizComplete(false)
-        setQuizResult(null)
-        setStartTime(Date.now())
+    const restartQuiz = async () => {
+        try {
+            setIsLoading(true)
+            const { data: questions, error } = await supabase
+                .from('quiz_questions')
+                .select('*')
+
+            if (error) throw error
+
+            // Sélectionner 5 questions aléatoires
+            const shuffled = questions.sort(() => 0.5 - Math.random())
+            const selectedQuestions = shuffled.slice(0, 5)
+
+            setQuestions(selectedQuestions)
+            setCurrentQuestion(0)
+            setSelectedAnswer(null)
+            setScore(0)
+            setShowScore(false)
+            setTimeLeft(30)
+            setTimerActive(true)
+            setIsQuizComplete(false)
+            setQuizResult(null)
+            setStartTime(Date.now())
+            setIsLoading(false)
+        } catch (error) {
+            console.error('Error restarting quiz:', error)
+            toast.error('Erreur lors du redémarrage du quiz')
+            setIsLoading(false)
+        }
     }
 
     if (isLoading) {
@@ -159,7 +203,7 @@ export default function Quiz() {
                     onClick={restartQuiz}
                     className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                    Recommencer le quiz
+                    Prochain quiz
                 </button>
             </div>
         )
@@ -205,16 +249,13 @@ export default function Quiz() {
             </div>
 
             <div className="flex justify-between items-center">
-                <div className="text-lg font-medium">
-                    Score : <span className="text-blue-600">{score}</span>
+                <div className="text-sm text-gray-600">
+                    Score actuel : {score} points
                 </div>
                 <button
                     onClick={handleNextQuestion}
                     disabled={!selectedAnswer}
-                    className={`px-6 py-2 rounded-lg transition-colors ${selectedAnswer
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                        }`}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {currentQuestion < questions.length - 1 ? 'Question suivante' : 'Terminer'}
                 </button>
