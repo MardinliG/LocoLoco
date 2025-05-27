@@ -51,17 +51,18 @@ export default function CocktailDetails({ cocktail }: { cocktail: Cocktail }) {
 
             <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                 {cocktail.image_url && (
-                    <div className="relative w-full h-96">
+                    <div className="w-full h-96 relative">
                         <img
                             src={cocktail.image_url}
                             alt={cocktail.name}
-                            className="object-cover w-full h-full"
+                            className="w-full h-full object-cover"
+                            loading="lazy"
                         />
                     </div>
                 )}
 
                 <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h1 className="text-3xl font-bold text-gray-900">{cocktail.name}</h1>
                         {cocktail.countries && (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
