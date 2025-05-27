@@ -1,7 +1,10 @@
 'use client'
 
+import { useState } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FiArrowLeft } from 'react-icons/fi'
+import { FiArrowLeft, FiEdit2, FiTrash2 } from 'react-icons/fi'
 
 type Cocktail = {
     id: string
@@ -22,6 +25,39 @@ type Cocktail = {
 }
 
 export default function CocktailDetails({ cocktail }: { cocktail: Cocktail }) {
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const supabase = createClientComponentClient()
+    const router = useRouter()
+
+    const handleDelete = async () => {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer ce cocktail ?')) {
+            return
+        }
+
+        setIsDeleting(true)
+        setError(null)
+
+        try {
+            const { error: deleteError } = await supabase
+                .from('cocktails')
+                .delete()
+                .eq('id', cocktail.id)
+
+            if (deleteError) {
+                throw deleteError
+            }
+
+            router.push('/cocktails')
+            router.refresh()
+        } catch (error) {
+            console.error('Error deleting cocktail:', error)
+            setError('Erreur lors de la suppression du cocktail')
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
     if (!cocktail) {
         return (
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -105,6 +141,40 @@ export default function CocktailDetails({ cocktail }: { cocktail: Cocktail }) {
                             <p className="text-sm text-gray-500">
                                 Créé par {cocktail.profiles.username}
                             </p>
+                        </div>
+                    )}
+
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                                    Actions
+                                </h2>
+                            </div>
+                            <div className="flex space-x-2">
+                                <Link
+                                    href={`/cocktails/${cocktail.id}/edit`}
+                                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                    <FiEdit2 className="mr-2" />
+                                    Modifier
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                                >
+                                    <FiTrash2 className="mr-2" />
+                                    {isDeleting ? 'Suppression...' : 'Supprimer'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="mt-4 text-sm text-red-600">
+                            {error}
                         </div>
                     )}
                 </div>
