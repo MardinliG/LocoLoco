@@ -70,7 +70,7 @@ export default function Navbar() {
                                     <FiUser className="h-5 w-5" />
                                 </button>
                                 {isUserMenuOpen && (
-                                    <div className="absolute right-0 w-48 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                    <div className="absolute right-0 w-48 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
                                         <div className="py-1">
                                             <Link
                                                 href="/profile"
