@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Clock, Trophy, Target, RotateCcw, CheckCircle, XCircle, Timer } from "lucide-react"
+import { Clock, Trophy, Target, RotateCcw, CheckCircle, XCircle, Timer, Play, Users, Zap } from "lucide-react"
 
 type Question = {
   id: string
@@ -34,27 +34,25 @@ export default function Quiz() {
   const [timeLeft, setTimeLeft] = useState(30)
   const [isQuizComplete, setIsQuizComplete] = useState(false)
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [showScore, setShowScore] = useState(false)
-  const [timerActive, setTimerActive] = useState(true)
+  const [timerActive, setTimerActive] = useState(false)
   const [showAnswer, setShowAnswer] = useState(false)
-
-  useEffect(() => {
-    fetchQuestions()
-  }, [])
+  const [quizStarted, setQuizStarted] = useState(false) // Nouvel état pour gérer le démarrage
+  const [correctAnswersCount, setCorrectAnswersCount] = useState(0) // Ajouter ce state
 
   useEffect(() => {
     let timer: NodeJS.Timeout
-    if (timeLeft > 0 && !isQuizComplete && timerActive && !showAnswer) {
+    if (timeLeft > 0 && !isQuizComplete && timerActive && !showAnswer && quizStarted) {
       timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
-    } else if (timeLeft === 0 && !isQuizComplete) {
+    } else if (timeLeft === 0 && !isQuizComplete && quizStarted) {
       handleNextQuestion()
     }
     return () => {
       if (timer) clearTimeout(timer)
     }
-  }, [timeLeft, isQuizComplete, timerActive, showAnswer])
+  }, [timeLeft, isQuizComplete, timerActive, showAnswer, quizStarted])
 
   const fetchQuestions = async () => {
     try {
@@ -70,6 +68,7 @@ export default function Quiz() {
       setQuestions(selectedQuestions)
       setCurrentQuestion(0)
       setScore(0)
+      setCorrectAnswersCount(0) // Réinitialiser le compteur
       setShowScore(false)
       setTimeLeft(30)
       setTimerActive(true)
@@ -83,6 +82,25 @@ export default function Quiz() {
     }
   }
 
+  const startQuiz = async () => {
+    if (questions.length === 0) {
+      await fetchQuestions()
+    }
+
+    // Initialiser le quiz
+    setQuizStarted(true)
+    setCurrentQuestion(0)
+    setScore(0)
+    setShowScore(false)
+    setTimeLeft(30)
+    setTimerActive(true)
+    setStartTime(Date.now())
+    setShowAnswer(false)
+    setSelectedAnswer(null)
+    setIsQuizComplete(false)
+    setQuizResult(null)
+  }
+
   const handleAnswerSelect = (answer: string) => {
     if (showAnswer) return
     setSelectedAnswer(answer)
@@ -92,6 +110,7 @@ export default function Quiz() {
     // Vérifier si la réponse est correcte
     if (answer === questions[currentQuestion].correct_answer) {
       setScore(score + questions[currentQuestion].points)
+      setCorrectAnswersCount(correctAnswersCount + 1) // Compter les bonnes réponses
       toast.success("🎉 Bonne réponse !")
     } else {
       toast.error("❌ Mauvaise réponse...")
@@ -113,12 +132,11 @@ export default function Quiz() {
     } else {
       const endTime = Date.now()
       const timeTaken = startTime ? Math.floor((endTime - startTime) / 1000) : 0
-      const correctAnswers = score / (questions.reduce((sum, q) => sum + q.points, 0) / questions.length)
 
       const result: QuizResult = {
         score,
         total_questions: questions.length,
-        correct_answers: Math.round(correctAnswers),
+        correct_answers: correctAnswersCount,
         time_taken: timeTaken,
       }
 
@@ -132,15 +150,18 @@ export default function Quiz() {
           const now = new Date().toISOString()
           const quizResultData = {
             user_id: session.user.id,
-            quiz_name: "Quiz Cocktails Général",
-            score,
-            max_score: questions.reduce((sum, q) => sum + q.points, 0),
+            score: correctAnswersCount, // Utiliser le nombre de bonnes réponses comme score
+            total_questions: questions.length,
+            correct_answers: correctAnswersCount,
+            time_taken: timeTaken,
             created_at: now,
+            updated_at: now,
           }
 
-          const { error } = await supabase.from("quiz_results").insert(quizResultData)
+          const { data, error } = await supabase.from("quiz_results").insert(quizResultData).select()
 
           if (error) throw error
+          console.log("Quiz result saved:", data)
           toast.success("🎉 Résultat sauvegardé avec succès !")
         } catch (error: any) {
           console.error("Error saving quiz result:", error)
@@ -154,6 +175,7 @@ export default function Quiz() {
     setIsQuizComplete(false)
     setQuizResult(null)
     setShowAnswer(false)
+    setCorrectAnswersCount(0) // Réinitialiser le compteur
     fetchQuestions()
   }
 
@@ -167,6 +189,7 @@ export default function Quiz() {
     return ((currentQuestion + 1) / questions.length) * 100
   }
 
+  // Écran de chargement
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -179,6 +202,100 @@ export default function Quiz() {
     )
   }
 
+  // Écran d'accueil du quiz (avant de commencer)
+  if (!quizStarted && !isQuizComplete) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white text-center py-12">
+            <div className="text-6xl mb-4">🎯</div>
+            <CardTitle className="text-3xl font-bold mb-4">Prêt pour le Quiz ?</CardTitle>
+            <p className="text-lg opacity-90 max-w-md mx-auto">
+              Testez vos connaissances sur les cocktails du monde entier !
+            </p>
+          </CardHeader>
+
+          <CardContent className="p-8">
+            <div className="space-y-6">
+              {/* Règles du quiz */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center border border-blue-200">
+                  <Target className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                  <div className="text-xl font-bold text-blue-700">5</div>
+                  <p className="text-sm text-blue-600">Questions</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 text-center border border-orange-200">
+                  <Clock className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+                  <div className="text-xl font-bold text-orange-700">30s</div>
+                  <p className="text-sm text-orange-600">Par question</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 text-center border border-green-200">
+                  <Trophy className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                  <div className="text-xl font-bold text-green-700">Points</div>
+                  <p className="text-sm text-green-600">Selon difficulté</p>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-yellow-500" />
+                  Comment ça marche ?
+                </h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    Répondez à 5 questions sur les cocktails
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    Vous avez 30 secondes par question
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    Plus vous répondez vite, plus vous gagnez de points
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                    Votre score sera sauvegardé dans le classement
+                  </li>
+                </ul>
+              </div>
+
+              {/* Statistiques rapides */}
+              <div className="flex items-center justify-center gap-6 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>Rejoignez la compétition</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Trophy className="h-4 w-4" />
+                  <span>Gagnez des points</span>
+                </div>
+              </div>
+
+              {/* Bouton de démarrage */}
+              <div className="text-center">
+                <Button
+                  onClick={startQuiz}
+                  size="lg"
+                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg px-12 py-4 text-lg font-bold"
+                >
+                  <Play className="mr-3 h-6 w-6" />
+                  Commencer le Quiz !
+                </Button>
+                <p className="text-xs text-gray-500 mt-3">Le timer commencera dès que vous cliquerez</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Écran de résultats
   if (isQuizComplete && quizResult) {
     const percentage = Math.round((quizResult.score / questions.reduce((sum, q) => sum + q.points, 0)) * 100)
     const getResultEmoji = () => {
@@ -255,6 +372,7 @@ export default function Quiz() {
     )
   }
 
+  // Aucune question disponible
   if (questions.length === 0) {
     return (
       <div className="text-center p-8">
@@ -273,6 +391,7 @@ export default function Quiz() {
     )
   }
 
+  // Quiz en cours
   const question = questions[currentQuestion]
 
   return (
