@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import { FiPlus, FiTrash2 } from 'react-icons/fi'
@@ -12,56 +12,33 @@ type Country = {
 }
 
 type CocktailFormProps = {
-    cocktail?: {
-        id: string
-        name: string
-        description: string | null
-        ingredients: string[] | null
-        instructions: string | null
-        image_url: string | null
-        country_id: string | null
-    }
+    mode?: 'create' | 'edit';
+    initialData?: {
+        id: string;
+        name: string;
+        description: string | null;
+        ingredients: string[] | null;
+        instructions: string | null;
+        image_url: string | null;
+        country_id: string | null;
+    };
+    countries: Country[];
 }
 
-export default function CocktailForm({ cocktail }: CocktailFormProps) {
-    const [name, setName] = useState(cocktail?.name || '')
-    const [description, setDescription] = useState(cocktail?.description || '')
-    const [ingredients, setIngredients] = useState<string[]>(cocktail?.ingredients || [])
-    const [instructions, setInstructions] = useState(cocktail?.instructions || '')
-    const [imageUrl, setImageUrl] = useState(cocktail?.image_url || '')
-    const [countryId, setCountryId] = useState(cocktail?.country_id || '')
-    const [countries, setCountries] = useState<Country[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+export default function CocktailForm({ mode = 'create', initialData, countries: initialCountries }: CocktailFormProps) {
+    const [name, setName] = useState(initialData?.name || '')
+    const [description, setDescription] = useState(initialData?.description || '')
+    const [ingredients, setIngredients] = useState<string[]>(initialData?.ingredients || [])
+    const [instructions, setInstructions] = useState(initialData?.instructions || '')
+    const [imageUrl, setImageUrl] = useState(initialData?.image_url || '')
+    const [countryId, setCountryId] = useState(initialData?.country_id || '')
+    const [countries, setCountries] = useState<Country[]>(initialCountries)
+    const [isLoading, setIsLoading] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [newIngredient, setNewIngredient] = useState('')
     const supabase = createClientComponentClient()
     const router = useRouter()
-
-    useEffect(() => {
-        const fetchCountries = async () => {
-            try {
-                setIsLoading(true)
-                const { data, error } = await supabase
-                    .from('countries')
-                    .select('*')
-                    .order('name')
-
-                if (error) {
-                    throw error
-                }
-
-                setCountries(data || [])
-            } catch (error) {
-                console.error('Error fetching countries:', error)
-                setError('Erreur lors du chargement des pays')
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchCountries()
-    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -86,12 +63,12 @@ export default function CocktailForm({ cocktail }: CocktailFormProps) {
                 user_id: user.id
             }
 
-            if (cocktail) {
+            if (initialData) {
                 // Mise à jour
                 const { error: updateError } = await supabase
                     .from('cocktails')
                     .update(cocktailData)
-                    .eq('id', cocktail.id)
+                    .eq('id', initialData.id)
 
                 if (updateError) throw updateError
             } else {
@@ -256,7 +233,7 @@ export default function CocktailForm({ cocktail }: CocktailFormProps) {
                 >
                     {isSubmitting
                         ? 'Enregistrement...'
-                        : cocktail
+                        : initialData
                             ? 'Mettre à jour le cocktail'
                             : 'Créer le cocktail'}
                 </button>

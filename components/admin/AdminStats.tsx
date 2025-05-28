@@ -38,6 +38,21 @@ type Stats = {
     userActivity: { date: string; newUsers: number; newCocktails: number }[]
 }
 
+type CocktailByCountry = {
+    countries: { name: string }[]
+    count: number
+}
+
+type QuizResultByDay = {
+    created_at: string
+    count: number
+}
+
+type UserActivity = {
+    created_at: string
+    cocktails: { count: number }[]
+}
+
 interface AdminStatsProps {
     initialStats: Stats
 }
@@ -51,35 +66,55 @@ export default function AdminStats({ initialStats }: AdminStatsProps) {
         setIsLoading(true)
         try {
             // Récupérer les statistiques mises à jour
-            const { data: cocktailsByCountry } = await supabase
+            const { data: cocktailsByCountry, error: cocktailsError } = await supabase
                 .from('cocktails')
-                .select('countries(name), count')
-                .group('country_id, countries(name)')
-                .order('count', { ascending: false })
+                .select('countries(name)')
 
-            const { data: quizResultsByDay } = await supabase
+            if (cocktailsError) throw cocktailsError
+
+            // Grouper les cocktails par pays
+            const groupedCocktails = cocktailsByCountry?.reduce((acc, item) => {
+                const countryName = item.countries[0].name
+                acc[countryName] = (acc[countryName] || 0) + 1
+                return acc
+            }, {} as Record<string, number>)
+
+            const cocktailsByCountryData = Object.entries(groupedCocktails || {}).map(([country, count]) => ({
+                country,
+                count
+            })).sort((a, b) => b.count - a.count)
+
+            const { data: quizResults, error: quizError } = await supabase
                 .from('quiz_results')
-                .select('created_at, count')
+                .select('created_at')
                 .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
-                .group('created_at')
-                .order('created_at')
 
-            const { data: userActivity } = await supabase
+            if (quizError) throw quizError
+
+            // Grouper les résultats de quiz par jour
+            const groupedQuizResults = quizResults?.reduce((acc, item) => {
+                const date = new Date(item.created_at).toLocaleDateString()
+                acc[date] = (acc[date] || 0) + 1
+                return acc
+            }, {} as Record<string, number>)
+
+            const quizResultsByDay = Object.entries(groupedQuizResults || {}).map(([date, count]) => ({
+                date,
+                count
+            })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+            const { data: userActivity, error: userError } = await supabase
                 .from('profiles')
                 .select('created_at, cocktails(count)')
                 .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
                 .order('created_at')
 
+            if (userError) throw userError
+
             setStats({
                 ...stats,
-                cocktailsByCountry: cocktailsByCountry?.map(item => ({
-                    country: item.countries.name,
-                    count: item.count
-                })) || [],
-                quizResultsByDay: quizResultsByDay?.map(item => ({
-                    date: new Date(item.created_at).toLocaleDateString(),
-                    count: item.count
-                })) || [],
+                cocktailsByCountry: cocktailsByCountryData,
+                quizResultsByDay,
                 userActivity: userActivity?.map(item => ({
                     date: new Date(item.created_at).toLocaleDateString(),
                     newUsers: 1,
