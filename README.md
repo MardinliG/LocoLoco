@@ -22,7 +22,7 @@ Une application web moderne pour découvrir et partager des recettes de cocktail
 
 2. Installez les dépendances :
 ```bash
-npm install
+npm install --legacy-peer-deps
 ```
 
 3. Configurez les variables d'environnement :
