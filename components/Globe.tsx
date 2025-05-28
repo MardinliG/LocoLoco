@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Globe from "react-globe.gl"
-import { Button } from "@/components/ui/Button"
+import { Button } from "@/components/ui/button"
 import { Menu, X, GlobeIcon, Users, DollarSign, MapPin, Wine } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { createClient } from '@supabase/supabase-js'
