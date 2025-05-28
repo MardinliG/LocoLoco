@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -20,17 +20,21 @@ interface GlobeProps {
     onCountryHover: (hovered: boolean, country?: Country) => void;
 }
 
-const CountryMarker = ({ country, onClick, onHover }: {
-    country: Country;
-    onClick: () => void;
-    onHover: (hovered: boolean) => void;
+export const Marker = ({
+    country,
+    onClick,
+    onHover,
+}: {
+    country: Country
+    onClick: (country: Country) => void
+    onHover: (country: Country | undefined) => void
 }) => {
     const markerRef = useRef<THREE.Mesh>(null);
     const [hovered, setHovered] = useState(false);
 
     const { longitude, latitude } = {
         longitude: country.coordinates[0],
-        latitude: country.coordinates[1]
+        latitude: country.coordinates[1],
     };
 
     const phi = (90 - latitude) * (Math.PI / 180);
@@ -52,14 +56,14 @@ const CountryMarker = ({ country, onClick, onHover }: {
         <group position={[x, y, z]}>
             <mesh
                 ref={markerRef}
-                onClick={onClick}
+                onClick={() => onClick(country)}
                 onPointerOver={() => {
                     setHovered(true);
-                    onHover(true);
+                    onHover(country);
                 }}
                 onPointerOut={() => {
                     setHovered(false);
-                    onHover(false);
+                    onHover(undefined);
                 }}
             >
                 <sphereGeometry args={[0.05, 32, 32]} />
@@ -97,11 +101,11 @@ const GlobeScene = ({ countries, onCountryClick, onCountryHover }: GlobeProps) =
 
             {/* Country Markers */}
             {countries.map((country, index) => (
-                <CountryMarker
+                <Marker
                     key={index}
                     country={country}
-                    onClick={() => onCountryClick(country)}
-                    onHover={(hovered) => onCountryHover(hovered, country)}
+                    onClick={(c) => onCountryClick(c)}
+                    onHover={(c) => onCountryHover(c !== undefined, c)}
                 />
             ))}
 
