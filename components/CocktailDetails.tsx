@@ -16,7 +16,7 @@ type Cocktail = {
     ingredients: string[] | null
     instructions: string | null
     image_url?: string | null
-    countries?: {
+    country?: {
         id: string
         name: string
         code: string
@@ -189,7 +189,7 @@ export default function CocktailDetails({ cocktail, comments: initialComments = 
                 user_id: data.user_id,
                 cocktail_id: data.cocktail_id,
                 profiles: {
-                    username: data.profiles.username
+                    username: data.profiles[0].username
                 }
             }
 
@@ -247,9 +247,9 @@ export default function CocktailDetails({ cocktail, comments: initialComments = 
                 <div className="p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                         <h1 className="text-3xl font-bold text-gray-900">{cocktail.name}</h1>
-                        {cocktail.countries && (
+                        {cocktail.country && (
                             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                {cocktail.countries.name}
+                                {cocktail.country.name}
                             </span>
                         )}
                     </div>
@@ -320,83 +320,6 @@ export default function CocktailDetails({ cocktail, comments: initialComments = 
                             </div>
                         </div>
                     )}
-
-                    <div className="mt-6 pt-6 border-t border-gray-200">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                                    <FiHeart className="mr-2" />
-                                    {isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                                </h2>
-                            </div>
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={toggleFavorite}
-                                    disabled={isLoading}
-                                    className={`p-2 rounded-full ${isFavorite
-                                        ? 'text-red-600 hover:text-red-700'
-                                        : 'text-gray-400 hover:text-gray-500'
-                                        }`}
-                                >
-                                    <FiHeart className="w-6 h-6" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="border-t pt-8">
-                        <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                            <FiMessageSquare className="mr-2" />
-                            Commentaires
-                        </h2>
-
-                        {session ? (
-                            <form onSubmit={handleCommentSubmit} className="mb-8">
-                                <textarea
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Partagez votre avis sur ce cocktail..."
-                                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    rows={3}
-                                    disabled={isSubmitting}
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                                >
-                                    {isSubmitting ? 'Envoi...' : 'Publier'}
-                                </button>
-                            </form>
-                        ) : (
-                            <p className="text-gray-600 mb-8">
-                                Connectez-vous pour laisser un commentaire
-                            </p>
-                        )}
-
-                        <div className="space-y-6">
-                            {comments && comments.length > 0 ? (
-                                comments.map((comment) => (
-                                    <div key={comment.id} className="bg-gray-50 rounded-lg p-4">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="font-medium text-gray-900">
-                                                {comment.profiles.username}
-                                            </span>
-                                            <span className="text-sm text-gray-500">
-                                                {new Date(comment.created_at).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <p className="text-gray-600">{comment.content}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-gray-600 text-center py-4">
-                                    Aucun commentaire pour le moment. Soyez le premier à commenter !
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
                     {error && (
                         <div className="mt-4 text-sm text-red-600">
                             {error}

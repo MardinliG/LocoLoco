@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic'
+
+
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -99,10 +102,10 @@ export default async function CocktailPage({ params }: { params: { id: string } 
         const serializedCocktail = {
             ...cocktail,
             created_at: cocktail.created_at ? new Date(cocktail.created_at).toISOString() : null,
-            countries: cocktail.countries ? {
-                id: cocktail.countries.id,
-                name: cocktail.countries.name,
-                code: cocktail.countries.code
+            countries: cocktail.countries?.[0] ? {
+                id: cocktail.countries[0].id,
+                name: cocktail.countries[0].name,
+                code: cocktail.countries[0].code
             } : null,
             profiles: profile
         }

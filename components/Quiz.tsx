@@ -138,35 +138,8 @@ export default function Quiz() {
         }
     }
 
-    const restartQuiz = async () => {
-        try {
-            setIsLoading(true)
-            const { data: questions, error } = await supabase
-                .from('quiz_questions')
-                .select('*')
-
-            if (error) throw error
-
-            // Sélectionner 5 questions aléatoires
-            const shuffled = questions.sort(() => 0.5 - Math.random())
-            const selectedQuestions = shuffled.slice(0, 5)
-
-            setQuestions(selectedQuestions)
-            setCurrentQuestion(0)
-            setSelectedAnswer(null)
-            setScore(0)
-            setShowScore(false)
-            setTimeLeft(30)
-            setTimerActive(true)
-            setIsQuizComplete(false)
-            setQuizResult(null)
-            setStartTime(Date.now())
-            setIsLoading(false)
-        } catch (error) {
-            console.error('Error restarting quiz:', error)
-            toast.error('Erreur lors du redémarrage du quiz')
-            setIsLoading(false)
-        }
+    const restartQuiz = () => {
+        fetchQuestions()
     }
 
     if (isLoading) {
@@ -203,7 +176,7 @@ export default function Quiz() {
                     onClick={restartQuiz}
                     className="w-full mt-6 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                    Prochain quiz
+                    Recommencer le quiz
                 </button>
             </div>
         )

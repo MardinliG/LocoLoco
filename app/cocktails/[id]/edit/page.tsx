@@ -45,7 +45,7 @@ export default async function EditCocktailPage({ params }: { params: { id: strin
     // Récupérer la liste des pays
     const { data: countries } = await supabase
         .from('countries')
-        .select('id, name')
+        .select('id, name, code')
         .order('name')
 
     return (

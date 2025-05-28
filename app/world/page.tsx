@@ -2,7 +2,7 @@ import GlobeComponent from '@/components/Globe'
 
 export default function WorldPage() {
     return (
-        <div className="min-h-screen bg-gray-900">
+        <div className="container mx-auto px-4">
             <GlobeComponent />
         </div>
     )
