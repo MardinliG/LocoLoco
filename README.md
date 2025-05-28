@@ -19,10 +19,6 @@ Une application web moderne pour découvrir et partager des recettes de cocktail
 ## Installation
 
 1. Clonez le dépôt :
-```bash
-git clone https://github.com/votre-username/lococktail.git
-cd lococktail
-```
 
 2. Installez les dépendances :
 ```bash
@@ -36,14 +32,12 @@ NEXT_PUBLIC_SUPABASE_URL=votre-url-supabase
 NEXT_PUBLIC_SUPABASE_ANON_KEY=votre-clé-anon-supabase
 ```
 
-4. Configurez Supabase :
-- Créez un nouveau projet sur [Supabase](https://supabase.com)
-- Exécutez le script SQL dans `supabase/migrations/20240217_initial_schema.sql`
-- Configurez l'authentification OAuth pour Google et GitHub
-
 5. Lancez le serveur de développement :
 ```bash
-npm run dev
+npm run build
+```
+```bash
+npm run build
 ```
 
 L'application sera accessible à l'adresse [http://localhost:3000](http://localhost:3000)
@@ -70,10 +64,4 @@ lococktail/
 - 🎯 Quiz sur les cocktails
 - 👑 Interface d'administration
 
-## Contribution
 
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
-
-## Licence
-
-MIT 
