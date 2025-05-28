@@ -1,117 +1,382 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-    :root {
-        --background: 0 0% 100%;
-        --foreground: 222.2 84% 4.9%;
-
-        --card: 0 0% 100%;
-        --card-foreground: 222.2 84% 4.9%;
-
-        --popover: 0 0% 100%;
-        --popover-foreground: 222.2 84% 4.9%;
-
-        --primary: 222.2 47.4% 11.2%;
-        --primary-foreground: 210 40% 98%;
-
-        --secondary: 210 40% 96.1%;
-        --secondary-foreground: 222.2 47.4% 11.2%;
-
-        --muted: 210 40% 96.1%;
-        --muted-foreground: 215.4 16.3% 46.9%;
-
-        --accent: 210 40% 96.1%;
-        --accent-foreground: 222.2 47.4% 11.2%;
-
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 210 40% 98%;
-
-        --border: 214.3 31.8% 91.4%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 222.2 84% 4.9%;
-
-        --radius: 0.5rem;
-    }
-
-    .dark {
-        --background: 222.2 84% 4.9%;
-        --foreground: 210 40% 98%;
-
-        --card: 222.2 84% 4.9%;
-        --card-foreground: 210 40% 98%;
-
-        --popover: 222.2 84% 4.9%;
-        --popover-foreground: 210 40% 98%;
-
-        --primary: 210 40% 98%;
-        --primary-foreground: 222.2 47.4% 11.2%;
-
-        --secondary: 217.2 32.6% 17.5%;
-        --secondary-foreground: 210 40% 98%;
-
-        --muted: 217.2 32.6% 17.5%;
-        --muted-foreground: 215 20.2% 65.1%;
-
-        --accent: 217.2 32.6% 17.5%;
-        --accent-foreground: 210 40% 98%;
-
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 210 40% 98%;
-
-        --border: 217.2 32.6% 17.5%;
-        --input: 217.2 32.6% 17.5%;
-        --ring: 212.7 26.8% 83.9%;
-    }
+/* Variables CSS élégantes */
+:root {
+  --cocktail-amber: #ed7611;
+  --cocktail-terracotta: #e06b50;
+  --cocktail-sage: #5c7360;
+  --cocktail-cream: #faf1e4;
+  --warm-white: #fefdfb;
+  --warm-gray: #78716c;
+  --warm-dark: #44403c;
 }
 
-@layer components {
-    .btn-primary {
-        background-color: hsl(var(--primary));
-        color: hsl(var(--primary-foreground));
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        transition: background-color 0.2s;
-    }
-
-    .btn-primary:hover {
-        background-color: hsl(var(--primary) / 0.9);
-    }
-
-    .btn-secondary {
-        background-color: hsl(var(--secondary));
-        color: hsl(var(--secondary-foreground));
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        transition: background-color 0.2s;
-    }
-
-    .btn-secondary:hover {
-        background-color: hsl(var(--secondary) / 0.9);
-    }
-
-    .input-field {
-        width: 100%;
-        padding: 0.5rem 1rem;
-        border: 1px solid hsl(var(--input));
-        border-radius: 0.5rem;
-    }
-
-    .input-field:focus {
-        outline: none;
-        border-color: hsl(var(--ring));
-        box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
-    }
+/* Base styles raffinés */
+html {
+  font-family: "Inter", system-ui, sans-serif;
+  scroll-behavior: smooth;
 }
 
-@layer base {
-    * {
-        border-color: hsl(var(--border));
-    }
+body {
+  background: linear-gradient(135deg, var(--warm-white) 0%, var(--cocktail-cream) 100%);
+  color: var(--warm-dark);
+  line-height: 1.6;
+  min-height: 100vh;
+  font-weight: 400;
+}
 
-    body {
-        background-color: hsl(var(--background));
-        color: hsl(var(--foreground));
-    }
+/* Typographie élégante */
+h1,
+h2,
+h3 {
+  font-family: "Playfair Display", serif;
+  font-weight: 600;
+  color: var(--warm-dark);
+  line-height: 1.2;
+}
+
+h1 {
+  background: linear-gradient(135deg, var(--cocktail-amber), var(--cocktail-terracotta));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Navigation sophistiquée */
+nav {
+  background: rgba(254, 253, 251, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(237, 118, 17, 0.1);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
+}
+
+nav a:hover {
+  color: var(--cocktail-amber);
+  transition: all 0.3s ease;
+}
+
+/* Boutons élégants */
+.btn-cocktail {
+  background: linear-gradient(135deg, var(--cocktail-amber), var(--cocktail-terracotta));
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(237, 118, 17, 0.2);
+}
+
+.btn-cocktail:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(237, 118, 17, 0.3);
+}
+
+.btn-cocktail-outline {
+  background: transparent;
+  color: var(--cocktail-amber);
+  border: 2px solid var(--cocktail-amber);
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-cocktail-outline:hover {
+  background: var(--cocktail-amber);
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Cartes sophistiquées */
+.card-cocktail {
+  background: var(--warm-white);
+  border-radius: 16px;
+  border: 1px solid rgba(237, 118, 17, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.card-cocktail:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  border-color: rgba(237, 118, 17, 0.15);
+}
+
+.card-cocktail::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cocktail-amber), var(--cocktail-terracotta));
+}
+
+/* Inputs raffinés */
+.input-cocktail {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid rgba(237, 118, 17, 0.1);
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: var(--warm-white);
+  font-family: "Inter", sans-serif;
+  color: var(--warm-dark);
+}
+
+.input-cocktail:focus {
+  outline: none;
+  border-color: var(--cocktail-amber);
+  box-shadow: 0 0 0 3px rgba(237, 118, 17, 0.1);
+  transform: translateY(-1px);
+}
+
+.input-cocktail::placeholder {
+  color: var(--warm-gray);
+}
+
+/* Badges élégants */
+.badge-cocktail {
+  background: rgba(237, 118, 17, 0.1);
+  color: var(--cocktail-amber);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid rgba(237, 118, 17, 0.2);
+}
+
+.badge-terracotta {
+  background: rgba(224, 107, 80, 0.1);
+  color: var(--cocktail-terracotta);
+  border: 1px solid rgba(224, 107, 80, 0.2);
+}
+
+.badge-sage {
+  background: rgba(92, 115, 96, 0.1);
+  color: var(--cocktail-sage);
+  border: 1px solid rgba(92, 115, 96, 0.2);
+}
+
+/* Remplacer les couleurs flashy */
+.text-blue-600,
+.text-blue-800,
+a[class*="text-blue"] {
+  color: var(--cocktail-amber) !important;
+}
+
+.bg-blue-600,
+button[class*="bg-blue"] {
+  background: linear-gradient(135deg, var(--cocktail-amber), var(--cocktail-terracotta)) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.bg-blue-50 {
+  background: rgba(237, 118, 17, 0.05) !important;
+}
+
+.bg-blue-100 {
+  background: rgba(237, 118, 17, 0.1) !important;
+}
+
+/* Couleurs rouges adoucies */
+.text-red-600 {
+  color: var(--cocktail-terracotta) !important;
+}
+
+.bg-red-50 {
+  background: rgba(224, 107, 80, 0.05) !important;
+}
+
+/* Couleurs vertes naturelles */
+.text-green-600 {
+  color: var(--cocktail-sage) !important;
+}
+
+.bg-green-50 {
+  background: rgba(92, 115, 96, 0.05) !important;
+}
+
+/* Couleurs jaunes/orange adoucies */
+.text-yellow-600,
+.text-orange-600 {
+  color: var(--cocktail-amber) !important;
+}
+
+.bg-yellow-50,
+.bg-orange-50 {
+  background: rgba(237, 118, 17, 0.05) !important;
+}
+
+/* Headers de cartes */
+.card-header-cocktail {
+  background: linear-gradient(135deg, rgba(254, 247, 237, 0.8), rgba(253, 236, 211, 0.8));
+  border-bottom: 1px solid rgba(237, 118, 17, 0.1);
+  padding: 1.5rem;
+}
+
+/* Formulaires d'authentification */
+.auth-form {
+  background: var(--warm-white);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(237, 118, 17, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-form::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--cocktail-amber), var(--cocktail-terracotta));
+}
+
+/* Boutons de suppression subtils */
+button[class*="text-red"] {
+  background: rgba(224, 107, 80, 0.08) !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  transition: all 0.3s ease !important;
+  border: none !important;
+  color: var(--cocktail-terracotta) !important;
+}
+
+button[class*="text-red"]:hover {
+  background: var(--cocktail-terracotta) !important;
+  color: white !important;
+  transform: scale(1.05) !important;
+}
+
+/* Animations de chargement */
+.loading-spinner {
+  border-color: var(--cocktail-amber) !important;
+  border-top-color: transparent !important;
+}
+
+/* Dropdowns élégants */
+.dropdown-cocktail {
+  background: var(--warm-white);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(237, 118, 17, 0.1);
+  overflow: hidden;
+}
+
+/* États vides */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--warm-gray);
+}
+
+.empty-state .emoji {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+  display: block;
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(237, 118, 17, 0.05);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--cocktail-amber), var(--cocktail-terracotta));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cocktail-terracotta);
+}
+
+/* Toasts élégants */
+.Toastify__toast {
+  border-radius: 12px !important;
+  font-family: "Inter", sans-serif !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+.Toastify__toast--success {
+  background: linear-gradient(135deg, var(--cocktail-sage), #7a8f7a) !important;
+}
+
+.Toastify__toast--error {
+  background: linear-gradient(135deg, var(--cocktail-terracotta), #cd4f32) !important;
+}
+
+.Toastify__toast--info {
+  background: linear-gradient(135deg, var(--cocktail-amber), var(--cocktail-terracotta)) !important;
+}
+
+/* Responsive amélioré */
+@media (max-width: 768px) {
+  .card-cocktail:hover {
+    transform: translateY(-2px);
+  }
+
+  .auth-form {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Animations d'entrée subtiles */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Focus amélioré pour l'accessibilité */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 3px solid rgba(237, 118, 17, 0.2) !important;
+  outline-offset: 2px !important;
+}
+
+/* Hover states subtils */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
 }

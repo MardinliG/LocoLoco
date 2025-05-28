@@ -8,7 +8,7 @@ import Navbar from '@/components/Navbar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'AuMax - Découvrez les meilleurs cocktails',
+    title: 'Lococktail - Découvrez les meilleurs cocktails',
     description: 'Explorez une collection de cocktails du monde entier',
 }
 

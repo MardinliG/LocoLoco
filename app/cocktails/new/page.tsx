@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import CocktailForm from '@/components/CocktailForm'
 
+
 export default async function NewCocktailPage() {
     const supabase = createServerComponentClient({ cookies })
 
